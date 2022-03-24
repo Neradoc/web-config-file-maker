@@ -1,7 +1,30 @@
-<!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
 	<meta charset="utf-8" />
+	<script>
+	/*
+	One item per line. Item format:
+
+	key:placeholder:group
+
+	- key is the key name in the final dict
+	- placeholder is the value displayed in the placeholder
+	- group is "?" if the item is optional
+	- group is a group name is the group is optional
+	
+	optional items are not listed if the value is empty
+	optional groups are not listed if no item in it has a value
+	*/
+	let fields_generator = `
+	ssid:home
+	password:password01
+	timezone:Europe/Paris:?
+	aio_username:Username:aio
+	aio_key:bfa67934:aio
+	openweather_token:c1332f68:ow
+	openweather_location:Paris, FR:ow
+	`;
+	</script>
 	<title>Create config</title>
 	<style>
 	#the_form p {
@@ -25,11 +48,11 @@
 	#generate_config {
 		display: table-row;
 	}
-	#generate_config span {
+	#generate_config it {
 		display: table-cell;
 		text-align: right;
 	}
-	#generate_config span button {
+	#generate_config it button {
 		font-size: inherit;
 		padding: 8px;
 		margin-top: 4px;
@@ -53,41 +76,36 @@
 		background: black;
 		color: white;
 	}
-	.required {
+	star {
 		color: red;
 	}
 	</style>
-	<script type="text/javascript" language="javascript" charset="utf-8">
-	let STAR = '<span class="required">*</span>';
-	let colors = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF", "#B3B7FF", "#FFBEA1", "#C7F985"];
-	
-	// escape quotes inside quotes
-	function filter_string(value) {
-		return value.replaceAll(/(\\|")/g, '\\$1');
-	}
+	<script>
+	STAR = '<star>*</star>';
+	colors = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF"];
+	$ = (x) => { return document.getElementById(x) };
 
 	// this creates the config string and file link
 	function submit_data() {
 		// read the form
-		let the_form = document.getElementById("the_form");
+		let the_form = $("the_form");
 
 		var entries = [];
 		var non_empty_groups = new Map();
 
 		// list the properties of every valid element of the form
-		for(index=0; index<the_form.elements.length; ++index) {
-			var element = the_form.elements[index];
-			var type = element.tagName;
-			var name = element.name;
-			var value = element.value;
-			var group = element.getAttribute("group");
+		Array.from(the_form.elements).forEach((element)=>{
+			// var type = element.tagName;
+			// var name = element.name;
+			// var value = element.value;
+			let group = element.getAttribute("group");
 
-			if( type == "INPUT" ) {
+			if( element.tagName == "INPUT" ) {
 				// filter the value to be a valid python string
-				value = filter_string(value);
+				let value = element.value.replaceAll(/(\\|")/g, '\\$1');
 				// add that to the valid entries
 				entries.push({
-					name: name,
+					name: element.name,
 					value: value,
 					group: group
 				});
@@ -96,7 +114,7 @@
 					non_empty_groups.set(group, true);
 				}
 			}
-		}
+		});
 
 		// create the output string
 		var output = "secrets = {\n";
@@ -117,31 +135,30 @@
 
 		// output the string to the output text area
 		let lines_num = output.split("\n").length + 1;
-		let area = document.getElementById("area");
+		let area = $("area");
 		area.value = output;
 		// resize and show the text area
 		area.style.width = "400px";
 		area.style.minHeight = `${lines_num}em`;
-		document.getElementById("output_text").style.display = "block";
+		$("output_text").style.display = "block";
 
 		// prepare the data to generate the link
 		let blob_data = new Blob([output], { type: "text/plain" });
 		let blob_url = window.URL.createObjectURL(blob_data);
 		// put the data into the link, with link text and file name
-		var download = document.getElementById("download_link");
+		var download = $("download_link");
 		download.download = "secrets.py";
 		download.title = "secrets.py";
 		download.href = blob_url;
 		download.innerHTML = "Download secrets.py";
 		// show the link
-		document.getElementById("download").style.display = "block";
+		$("download").style.display = "block";
 	}
 
 	// dynamically generate the entry form from the field
 	function make_form_auto() {
-		let fields_list = document.getElementById("fields_list")
-			.value.split(/\s*\n\s*/);
-		let the_form = document.getElementById("the_form");
+		let fields_list = fields_generator.split(/\s*\n\s*/);
+		let the_form = $("the_form");
 		var group_colors = new Map();
 		var color_index = 0;
 
@@ -179,60 +196,28 @@
 			line.append(input);
 			the_form.append(line);
 		});
-		let generate_config = document.getElementById("generate_config");
+		let generate_config = $("generate_config");
 		the_form.append(generate_config);
 	}
 	</script>
 </head>
 <body>
-<content>
-	<p>Hello, this is a generic script to create a secrets.py file.</p>
-	<!--
-	Hidden field.
-	This is where you configure the fields list with their placeholder values.
-	Make it visible by removing the "hidden" class for tests.
-
-	One item per line. Item format:
-
-	key:placeholder:group
-
-	- key is the key name in the final dict
-	- placeholder is the value displayed in the placeholder
-	- group is "?" if the item is optional
-	- group is a group name is the group is optional
-	
-	optional items are not listed if the value is empty
-	optional groups are not listed if no item in it has a value
-	-->
-	<p id="fields_generator" class="hidden">Fields: <textarea id="fields_list">
-		ssid:home
-		password:password01
-		timezone:Europe/Paris:?
-		aio_username:Username:aio?
-		aio_key:bfa67934:aio?
-		openweather_token:c1332f68:ow?
-		openweather_location:Paris, FR:ow?
-		</textarea>
-		<button onclick="make_form_auto();">Make form</button>
+<p>Hello, this is a generic script to create a secrets.py file.</p>
+<!--
+This is the form itself.
+It's created dynamically, displayed as a table, with a big button at the bottom.
+-->
+<form action="#" id="the_form" onsubmit="submit_data(); return false;">
+	<p id="generate_config">
+		<it>&nbsp;</it>
+		<it><button onclick="submit_data();">Generate config</button></it>
 	</p>
-	<!--
-	This is the form itself.
-	It's created dynamically, displayed as a table, with a big button at the bottom.
-	-->
-	<form action="#" id="the_form" onsubmit="submit_data(); return false;">
-		<p id="generate_config">
-			<span>&nbsp;</span>
-			<span><button onclick="submit_data();">Generate config</button></span>
-		</p>
-	</form>
-	<!-- The download link pointing to the data blob of the file. -->
-	<div id="download"><a id="download_link" href="">Download link</a></div>
-	<!-- The output text field. Selects the whole text on focus for copy and paste. -->
-	<div id="output_text"><textarea id="area" onfocus="this.select()"></textarea></div>
-</content>
+</form>
+<!-- The download link pointing to the data blob of the file. -->
+<p id="download"><a id="download_link" href="">Download link</a></p>
+<!-- The output text field. Selects the whole text on focus for copy and paste. -->
+<p id="output_text"><textarea id="area" onfocus="this.select()"></textarea></p>
 
-<script type="text/javascript" language="javascript" charset="utf-8">
-make_form_auto();
-</script>
+<script>make_form_auto();</script>
 </body>
 </html>
