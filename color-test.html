@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8" />
+	<title>Create config</title>
+	<script type="text/javascript" language="javascript" charset="utf-8">
+	let colors = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF", "#B3B7FF", "#FFBEA1", "#C7F985"];
+	</script>
+</head>
+<body>
+<div id="debug"></div>
+
+<script type="text/javascript" language="javascript" charset="utf-8">
+debug = document.getElementById("debug");
+colors.forEach((color) => {
+	span = document.createElement("span");
+	span.style.background = color;
+	span.style.display = "inline-block";
+	span.style.width = "32px";
+	span.style.height = "32px";
+	debug.append(span);
+});
+</script>
+
+</body>
+</html>
