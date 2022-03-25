@@ -35,8 +35,8 @@ with open(input_file, "r") as fp:
 
 output = re.sub("> +<", "><", output)
 output = re.sub("\t", "", output)
-# output = re.sub("let ", "", output)
-# output = re.sub("var ", "", output)
+output = re.sub("let ", "", output)
+output = re.sub("var ", "", output)
 
 # print(output)
 print('length', len(output))
