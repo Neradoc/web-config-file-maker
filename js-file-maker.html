@@ -1,157 +1,153 @@
-<html>
-<head>
-	<meta charset="utf-8" />
-	<script>
-	/*
-	One item per line. Item format:
-
-	key:placeholder:group
-
-	- key is the key name in the final dict
-	- placeholder is the value displayed in the placeholder
-	- group is "?" if the item is optional
-	- group is a group name is the group is optional
-	
-	optional items are not listed if the value is empty
-	optional groups are not listed if no item in it has a value
-	*/
-	fields = `
-	ssid:home
-	password:password01
-	timezone:Europe/Paris:?
-	aio_username:Username:aio
-	aio_key:bfa67934:aio
-	openweather_token:c1332f68:ow
-	openweather_location:Paris, FR:ow
-
-	`;
-	colors_list = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF"];
-	$ = (x) => { return document.getElementById(x) };
-	C = (x) => { return document.createElement(x) };
-
-	// this creates the config string and file link
-	submit_data = () => {
-		// read the form
-		let the_form = $("the_form");
-
-		// count empty groups
-		var non_empty_groups = new Map();
-		Array.from(the_form.elements).forEach((element)=>{
-			let group = element.getAttribute("group");
-			// compute empty groups for filtering
-			if(group && element.value != "") {
-				non_empty_groups.set(group, true);
-			}
-		});
-
-		// create the output string
-		var output = "secrets = {\n";
-		Array.from(the_form.elements).forEach((element)=>{
-			let group = element.getAttribute("group");
-			if( element.tagName == "INPUT" ) {
-				// filter the value to be a valid python string
-				let value = element.value.replaceAll(/(\\|")/g, '\\$1');
-				// skip optional entries with no value
-				if( group == "?" && value == "" ) return;
-				// skip groups with no value
-				if( group && !non_empty_groups.has(group) ) return;
-				// python dict entry
-				output += `  "${element.name}": "${value}",\n`;
-			}
-		});
-		output += "}\n";
-
-		// output the string to the output text area
-		let lines_num = output.split("\n").length + 1;
-		let area = $("output_text");
-		area.value = output;
-		// resize and show the text area
-		area.style.width = "400px";
-		area.style.minHeight = `${lines_num}em`;
-
-		// prepare the data to generate the link
-		let blob_data = new Blob([output], { type: "text/plain" });
-		let blob_url = window.URL.createObjectURL(blob_data);
-		// put the data into the link, with link text and file name
-		var download = $("download_link");
-		download.download = "secrets.py";
-		download.title = "secrets.py";
-		download.href = blob_url;
-		download.innerHTML = "Download secrets.py";
-
-		// show the results
-		$("result").style.display = "block";
-	};
-
-	// dynamically generate the entry form from the field
-	make_form_auto = () => {
-		let fields_list = fields.split(/\s*\n\s*/);
-		let the_form = $("the_form");
-		var group_colors = new Map();
-		var color_index = 0;
-
-		fields_list.forEach((item, index) => {
-			items = item.trim().split(":").concat(["", "", ""]);
-
-			let name = items[0].trim();
-			if(name == "") return;
-			let value = items[1].trim();
-			let group = items[2].trim();
-
-			color = "";
-			if( group && group != "?" ) {
-				if( !group_colors.has(group) ) {
-					group_colors.set(group, colors_list[color_index]);
-					color_index = (color_index + 1) % colors_list.length;
-				}
-				color = group_colors.get(group);
-			}
-
-			let input = C("input");
-			input.id = name;
-			input.name = name;
-			input.placeholder = value;
-			input.setAttribute("group", group);
-
-			let label = C("it");
-			label.innerHTML = (group ? "" : '<st>*</st>') + `${name}`;
-
-			let line = C("p");
-			if(color) line.style.background = color;
-			line.append(label);
-			line.append(input);
-			the_form.append(line);
-		});
-		the_form.innerHTML += (`<p><it>&nbsp;</it><it><button onclick="submit_data();">Generate config</button></it></p>`);
-	};
-	</script>
-	<!-- <title>Create config</title> -->
-	<style>
-	* { font-size: 1em; }
-	#the_form p {
-		display: table-row;
-	}
-	it { text-align: right; }
-	it, input {
-		display: table-cell;
-		padding: 4px;
-	}
-	input {
-		background-color: rgba(255,255,255,0.8);
-	}
-	#result {
-		display: none;
-	}
-	button, a {
-		line-height: 200%;
-	}
-	st {
-		color: red;
-	}
-	</style>
-</head>
-<body>
 <p>Hello, this is a generic script to create a secrets.py file.</p>
+<script>
+/*
+One item per line. Item format:
+
+key:placeholder:group
+
+- key is the key name in the final dict
+- placeholder is the value displayed in the placeholder
+- group is "?" if the item is optional
+- group is a group name is the group is optional
+
+optional items are not listed if the value is empty
+optional groups are not listed if no item in it has a value
+*/
+fields = `
+ssid:home
+password:password01
+timezone:Europe/Paris:?
+aio_username:Username:aio
+aio_key:bfa67934:aio
+openweather_token:c1332f68:ow
+openweather_location:Paris, FR:ow
+
+`;
+colors_list = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF"];
+$ = (x) => { return document.getElementById(x) };
+C = (x) => { return document.createElement(x) };
+
+// this creates the config string and file link
+submit_data = () => {
+	// read the form
+	let the_form = $("the_form");
+
+	// count empty groups
+	var non_empty_groups = new Map();
+	Array.from(the_form.elements).forEach((element)=>{
+		let group = element.getAttribute("group");
+		// compute empty groups for filtering
+		if(group && element.value != "") {
+			non_empty_groups.set(group, true);
+		}
+	});
+
+	// create the output string
+	var output = "secrets = {\n";
+	Array.from(the_form.elements).forEach((element)=>{
+		let group = element.getAttribute("group");
+		if( element.tagName == "INPUT" ) {
+			// filter the value to be a valid python string
+			let value = element.value.replaceAll(/(\\|")/g, '\\$1');
+			// skip optional entries with no value
+			if( group == "?" && value == "" ) return;
+			// skip groups with no value
+			if( group && !non_empty_groups.has(group) ) return;
+			// python dict entry
+			output += `  "${element.name}": "${value}",\n`;
+		}
+	});
+	output += "}\n";
+
+	// output the string to the output text area
+	let lines_num = output.split("\n").length + 1;
+	let area = $("output_text");
+	area.value = output;
+	// resize and show the text area
+	area.style.width = "400px";
+	area.style.minHeight = `${lines_num}em`;
+
+	// prepare the data to generate the link
+	let blob_data = new Blob([output], { type: "text/plain" });
+	let blob_url = window.URL.createObjectURL(blob_data);
+	// put the data into the link, with link text and file name
+	var download = $("download_link");
+	download.download = "secrets.py";
+	download.title = "secrets.py";
+	download.href = blob_url;
+	download.innerHTML = "Download secrets.py";
+
+	// show the results
+	$("result").style.display = "block";
+};
+
+// dynamically generate the entry form from the field
+make_form_auto = () => {
+	let fields_list = fields.split(/\s*\n\s*/);
+	let the_form = $("the_form");
+	var group_colors = new Map();
+	var color_index = 0;
+
+	fields_list.forEach((item, index) => {
+		items = item.trim().split(":").concat(["", "", ""]);
+
+		let name = items[0].trim();
+		if(name == "") return;
+		let value = items[1].trim();
+		let group = items[2].trim();
+
+		color = "";
+		if( group && group != "?" ) {
+			if( !group_colors.has(group) ) {
+				group_colors.set(group, colors_list[color_index]);
+				color_index = (color_index + 1) % colors_list.length;
+			}
+			color = group_colors.get(group);
+		}
+
+		let input = C("input");
+		input.id = name;
+		input.name = name;
+		input.placeholder = value;
+		input.setAttribute("group", group);
+
+		let label = C("it");
+		label.innerHTML = (group ? "" : '<st>*</st>') + `${name}`;
+
+		let line = C("p");
+		if(color) line.style.background = color;
+		line.append(label);
+		line.append(input);
+		the_form.append(line);
+	});
+	the_form.innerHTML += (`<p><it>&nbsp;</it><it><button onclick="submit_data();">Generate config</button></it></p>`);
+};
+</script>
+<!-- <title>Create config</title> -->
+<style>
+* { font-size: 1em; }
+#the_form p {
+	display: table-row;
+}
+it { text-align: right; }
+it, input {
+	display: table-cell;
+	padding: 4px;
+}
+input {
+	background-color: rgba(255,255,255,0.8);
+}
+#result {
+	display: none;
+}
+button, a {
+	line-height: 200%;
+}
+st {
+	color: red;
+}
+</style>
+<meta charset="utf-8" />
 <!--
 This is the form itself.
 It's created dynamically, displayed as a table, with a big button at the bottom.
