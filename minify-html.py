@@ -8,6 +8,9 @@ if len(sys.argv) != 2:
 	print("What file ?")
 	sys.exit(1)
 
+config_include = '<script src="js-file-maker.js"></script>'
+config_file = "js-file-maker.js"
+
 input_file = sys.argv[1]
 with open(input_file, "r") as fp:
 	data = fp.read()
@@ -29,8 +32,19 @@ with open(input_file, "r") as fp:
 	data = data.replace('"group"', '"gg"')
 	data = data.replace('"modes"', '"mm"')
 
+	with open(config_file, "r") as fp:
+		config_data = "<script>" + fp.read() + "</script>"
+		full_data = data.replace(config_include, config_data)
+
 	output = minify_html.minify(
 		data,
+		minify_js=True,
+		minify_css=True,
+		remove_processing_instructions=True,
+	)
+
+	full_output = minify_html.minify(
+		full_data,
 		minify_js=True,
 		minify_css=True,
 		remove_processing_instructions=True,
@@ -41,9 +55,12 @@ output = re.sub("\t", "", output)
 output = re.sub("let ", "", output)
 output = re.sub("var ", "", output)
 
-# print(output)
-print('length', len(output))
+print(f"Lengths: Mini = {len(output)} Full = {len(full_output)}")
 
 output_file = input_file[:-5] + ".mini.html"
 with open(output_file, "w") as fp:
 	fp.write(output)
+
+full_file = input_file[:-5] + ".setup.html"
+with open(full_file, "w") as fp:
+	fp.write(full_output)
