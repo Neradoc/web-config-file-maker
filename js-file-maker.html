@@ -1,41 +1,17 @@
 <p>Hello, this is a generic script to create a secrets.py file.</p>
-<script>
-/*
-One item per line. Item format:
-
-key:placeholder:group
-
-- key is the key name in the final dict
-- placeholder is the value displayed in the placeholder
-- group is "?" if the item is optional
-- group is a group name is the group is optional
-
-Optional items are not listed if the value is empty.
-Optional groups are not listed if no item in it has a value.
-*/
-fields = `
-ssid:home
-password:password01
-timezone:Europe/Paris:?
-aio_username:Username:aio
-aio_key:bfa67934:aio
-openweather_token:c1332f68:ow
-openweather_location:Paris, FR:ow
-
-`;
-</script>
+<script src="js-file-maker.js"></script>
 <!-- <title>Create config</title> -->
 <style>
 * { font-size: 1em; }
 #the_form p {
 	display: table-row;
 }
-it { text-align: right; }
-it, input {
+label { text-align: right; }
+label, .input {
 	display: table-cell;
 	padding: 4px;
 }
-input {
+.input {
 	background-color: rgba(255,255,255,0.8);
 }
 #result {
@@ -75,8 +51,12 @@ submit_data = () => {
 	var non_empty_groups = new Map();
 	Array.from(the_form.elements).forEach((element)=>{
 		let group = element.getAttribute("group");
+		var value = element.value;
+		if( element.type == "checkbox" ) {
+			value = element.checked ? 1 : 0;
+		}
 		// compute empty groups for filtering
-		if(group && element.value) {
+		if(group && value) {
 			non_empty_groups.set(group, true);
 		}
 	});
@@ -85,19 +65,31 @@ submit_data = () => {
 	var output = "secrets = {\n";
 	Array.from(the_form.elements).forEach((element)=>{
 		let group = element.getAttribute("group");
-		if( element.tagName == "INPUT" ) {
+		let modes = element.getAttribute("modes");
+
+		if( element.classList.contains("input") ) {
 			// filter the value to be a valid python string
 			let value = element.value.replaceAll(/(\\|")/g, '\\$1');
+			var empty = (value == "");
+
+			if( element.type == "checkbox" ) {
+				// bool
+				value = element.checked ? "True" : "False";
+				empty = !element.checked;
+			} else {
+				// string
+				value = `"${value}"`;
+			}
 			if(
 				// non optional entry
-				!group
-				// optional entriy with a value
-				|| (group == "?" && value)
+				(group == "" && !modes.includes("?"))
+				// optional entry with a value
+				|| (modes.includes("?") && !empty)
 				// group with a value
 				|| non_empty_groups.has(group)
 			) {
 				// python dict entry
-				output += `  "${element.name}": "${value}",\n`;
+				output += `  "${element.name}": ${value},\n`;
 			}
 		}
 	});
@@ -135,13 +127,19 @@ make_form_auto = () => {
 	fields_list.forEach((item, index) => {
 		items = item.trim().split(/\s*:\s*/).concat(["", "", ""]);
 
-		let name = items[0];
+		var title = items[0].trim();
+		let name = items[1];
 		if(name) {
-			let value = items[1];
-			let group = items[2];
+			let value = items[2];
+			var group = items[3].trim();
+
+			var modes = group.replace(/[a-z1-9]/ig,"");
+			group = group.replace(/[^a-z1-9]/ig,"");
+
+			if( title == "" ) title = name;
 
 			color = "";
-			if( group && group != "?" ) {
+			if( group != "" ) {
 				if( !group_colors.has(group) ) {
 					group_colors.set(group, colors_list[color_index]);
 					color_index = (color_index + 1) % colors_list.length;
@@ -149,14 +147,36 @@ make_form_auto = () => {
 				color = group_colors.get(group);
 			}
 
-			let input = _("input");
-			input.id = name;
-			input.name = name;
-			input.placeholder = value;
-			input.setAttribute("group", group);
+			var input = "";
+			var selects = select_fields[`field_${name}`]
+			if( selects != undefined ) {
+				input = _("select");
+				selects.forEach((optval) => {
+					option = _("option");
+					option.innerHTML = optval;
+					input.append(option);
+				});
+			} else {
+				input = _("input");
+				input.placeholder = value;
+			}
 
-			let label = _("it");
-			label.innerHTML = (group ? "" : '<st>*</st>') + `${name}`;
+			input.id = name;
+			input.className = "input";
+			input.name = name;
+			input.setAttribute("group", group);
+			input.setAttribute("modes", modes);
+			if( modes.includes("#") ) {
+				input.type = "checkbox";
+				input.value = "";
+				if( value.toLowerCase() == "true" ) {
+					input.setAttribute("checked", true);
+				}
+			}
+
+			let label = _("label");
+			label.setAttribute("for", name);
+			label.innerHTML = (group || modes.includes("?") ? "" : '<st>*</st>') + `${title}`;
 
 			let line = _("p");
 			if(color) line.style.background = color;
@@ -165,7 +185,7 @@ make_form_auto = () => {
 			the_form.append(line);
 		}
 	});
-	the_form.innerHTML += (`<p><it></it><it><button onclick="submit_data();">Generate config</button></it></p>`);
+	the_form.innerHTML += (`<p><label></label><label><button>Generate config</button></label></p>`);
 };
 make_form_auto();
 </script>

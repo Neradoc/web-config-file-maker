@@ -15,7 +15,7 @@ with open(input_file, "r") as fp:
 	html_ids = re.findall(r'id="([a-z_]+)"', data)
 	html_ids = list(reversed(sorted(html_ids)))
 
-	html_ids += ["make_form_auto", "submit_data", "colors_list", "group"]
+	html_ids += ["make_form_auto", "submit_data", "colors_list"]
 	print(html_ids)
 
 	for index, id in enumerate(html_ids):
@@ -25,6 +25,9 @@ with open(input_file, "r") as fp:
 		# data = data.replace(f'id="{id}"', f'id="{repl}"')
 		# data = data.replace(f'$("{id}")', f'$("{repl}")')
 		# data = data.replace(f'#{id}', f'#{repl}')
+
+	data = data.replace('"group"', '"gg"')
+	data = data.replace('"modes"', '"mm"')
 
 	output = minify_html.minify(
 		data,
