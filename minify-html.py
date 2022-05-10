@@ -4,22 +4,32 @@ import minify_html
 import re
 import sys
 
-if len(sys.argv) != 2:
-	print("What file ?")
-	sys.exit(1)
 
-config_include = '<script src="js-file-maker.js"></script>'
+input_file = "js-file-maker.html"
 config_file = "js-file-maker.js"
 
-input_file = sys.argv[1]
+if len(sys.argv) == 2:
+	input_file = sys.argv[1]
+	config_file = re.sub("html?$","js",input_file)
+
+config_include = f'<script src="{config_file}"></script>'
+
 with open(input_file, "r") as fp:
 	data = fp.read()
 
 	html_ids = re.findall(r'id="([a-z_]+)"', data)
 	html_ids = list(reversed(sorted(html_ids)))
 
-	html_ids += ["make_form_auto", "submit_data", "colors_list"]
+	html_ids += [
+		"make_form_auto",
+		"submit_data",
+		"colors_list",
+		"_get_attr_",
+		"_set_attr_",
+	]
 	print(html_ids)
+
+	substitutes = []
 
 	for index, id in enumerate(html_ids):
 		repl = chr(65 + index)
@@ -28,10 +38,11 @@ with open(input_file, "r") as fp:
 		# data = data.replace(f'id="{id}"', f'id="{repl}"')
 		# data = data.replace(f'$("{id}")', f'$("{repl}")')
 		# data = data.replace(f'#{id}', f'#{repl}')
+		substitutes.append((repl, id))
 
-	data = data.replace('"input_group"', '"gg"')
-	data = data.replace('"input_modes"', '"mm"')
-	data = data.replace('"target_input"', '"tt"')
+	data = data.replace('"input_group"', '"G"')
+	data = data.replace('"input_modes"', '"M"')
+	data = data.replace('"target_input"', '"T"')
 
 	with open(config_file, "r") as fp:
 		config_data = "<script>" + fp.read() + "</script>"
@@ -56,6 +67,7 @@ output = re.sub("\t", "", output)
 output = re.sub("let ", "", output)
 output = re.sub("var ", "", output)
 
+print(dict(substitutes))
 print(f"Lengths: Mini = {len(output)} Full = {len(full_output)}")
 
 output_file = input_file[:-5] + ".mini.html"
