@@ -31,5 +31,5 @@ Open Weather Location:openweather_location:Paris, FR:ow
 
 `;
 var select_fields = {
-	field_timezone: ["", "Europe/Paris", "Europe/Berlin", "Canada/London"],
+	field_timezone: ["Europe/Paris", "Europe/Berlin", "Canada/London"],
 }

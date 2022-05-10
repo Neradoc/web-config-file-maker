@@ -29,8 +29,9 @@ with open(input_file, "r") as fp:
 		# data = data.replace(f'$("{id}")', f'$("{repl}")')
 		# data = data.replace(f'#{id}', f'#{repl}')
 
-	data = data.replace('"group"', '"gg"')
-	data = data.replace('"modes"', '"mm"')
+	data = data.replace('"input_group"', '"gg"')
+	data = data.replace('"input_modes"', '"mm"')
+	data = data.replace('"target_input"', '"tt"')
 
 	with open(config_file, "r") as fp:
 		config_data = "<script>" + fp.read() + "</script>"

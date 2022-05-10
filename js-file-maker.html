@@ -1,8 +1,9 @@
+<meta charset="utf-8" />
 <p>Hello, this is a generic script to create a secrets.py file.</p>
 <script src="js-file-maker.js"></script>
 <!-- <title>Create config</title> -->
 <style>
-* { font-size: 1em; }
+* { font-size: 1em; font-family: Verdana; }
 #the_form p {
 	display: table-row;
 }
@@ -10,6 +11,14 @@ label { text-align: right; }
 label, .input {
 	display: table-cell;
 	padding: 4px;
+}
+label select {
+	width: 1em;
+	margin-left: 0.5em;
+	padding-left: 1em;
+}
+select option:first-child {
+	font-style: italic;
 }
 .input {
 	background-color: rgba(255,255,255,0.8);
@@ -24,7 +33,6 @@ st {
 	color: red;
 }
 </style>
-<meta charset="utf-8" />
 <!--
 This is the form itself.
 It's created dynamically, displayed as a table, with a big button at the bottom.
@@ -36,7 +44,6 @@ It's created dynamically, displayed as a table, with a big button at the bottom.
 <!-- The output text field. Selects the whole text on focus for copy and paste. -->
 <textarea id="output_text" onfocus="this.select()"></textarea>
 </p>
-
 <script>
 colors_list = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF"];
 $ = (x) => { return document.getElementById(x) };
@@ -50,7 +57,7 @@ submit_data = () => {
 	// count empty groups
 	var non_empty_groups = new Map();
 	Array.from(the_form.elements).forEach((element)=>{
-		let group = element.getAttribute("group");
+		let group = element.getAttribute("input_group");
 		var value = element.value;
 		if( element.type == "checkbox" ) {
 			value = element.checked ? 1 : 0;
@@ -64,8 +71,8 @@ submit_data = () => {
 	// create the output string
 	var output = "secrets = {\n";
 	Array.from(the_form.elements).forEach((element)=>{
-		let group = element.getAttribute("group");
-		let modes = element.getAttribute("modes");
+		let group = element.getAttribute("input_group");
+		let modes = element.getAttribute("input_modes");
 
 		if( element.classList.contains("input") ) {
 			// filter the value to be a valid python string
@@ -147,14 +154,21 @@ make_form_auto = () => {
 				color = group_colors.get(group);
 			}
 
-			var input = "";
+			var input = null;
+			var select = null;
 			var selects = select_fields[`field_${name}`]
 			if( selects != undefined ) {
-				input = _("select");
+				input = _("input");
+				select = _("select");
+				option = _("option");
+				option.innerHTML = name;
+				option.value = "";
+				select.append(option);
 				selects.forEach((optval) => {
 					option = _("option");
 					option.innerHTML = optval;
-					input.append(option);
+					option.setAttribute("target_input", name)
+					select.append(option);
 				});
 			} else {
 				input = _("input");
@@ -164,8 +178,8 @@ make_form_auto = () => {
 			input.id = name;
 			input.className = "input";
 			input.name = name;
-			input.setAttribute("group", group);
-			input.setAttribute("modes", modes);
+			input.setAttribute("input_group", group);
+			input.setAttribute("input_modes", modes);
 			if( modes.includes("#") ) {
 				input.type = "checkbox";
 				input.value = "";
@@ -180,11 +194,22 @@ make_form_auto = () => {
 
 			let line = _("p");
 			if(color) line.style.background = color;
+			if(select) {
+				label.appendChild(select);
+			}
 			line.append(label);
 			line.append(input);
 			the_form.append(line);
 		}
 	});
+	the_form.onclick = function(event) {
+		var target = event.target;
+		var input = $(target.getAttribute("target_input"));
+		if(input) {
+			input.value = target.value;
+			input.select();
+		};
+	};
 	the_form.innerHTML += (`<p><label></label><label><button>Generate config</button></label></p>`);
 };
 make_form_auto();
