@@ -8,6 +8,7 @@ title:key:placeholder:group
 - placeholder is the value displayed in the placeholder
 - group contains "?" if the item is optional
 - group contains "#" if the item is a checkbox
+- group contains "$" if the item is a number
 - group is a group name if the group is optional
 
 If placeholder is the word "true" for a checkbox, it's checked by default
@@ -18,7 +19,23 @@ To make an item a popup menu (html SELECT) add an entry in select_fields below.
 The entry is named field_ + the name of the field (as defined in the list above).
 The value is a list of possible values for the field, starting with the empty string if the field is optional.
 */
+var file_name = "secrets.py"
+var file_prefix = "secrets = {\n"
+var file_suffix = "}\n"
+var line_format = '  "${name}": ${value},\n'
+var value_true = "True"
+var value_false = "False"
+
+/*
+var file_name = "config.txt"
+var file_prefix = ""
+var file_suffix = ""
+var line_format = '${name} = ${value}\n'
+*/
+
+
 var fields = `
+Speed:SPEED:10:$
 WiFi SSID:ssid:home:
 WiFi Password:password:password01:
 Time Zone:timezone::?

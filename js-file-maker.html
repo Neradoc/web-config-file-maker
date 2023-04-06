@@ -1,5 +1,5 @@
 <meta charset="utf-8" />
-<p>Hello, this is a generic script to create a secrets.py file.</p>
+<p>Hello, this is a generic script to create a config file.</p>
 <script src="js-file-maker.js"></script>
 <!-- <title>Create config</title> -->
 <style>
@@ -71,10 +71,11 @@ submit_data = () => {
 	});
 
 	// create the output string
-	var output = "secrets = {\n";
+	var output = file_prefix;
 	Array.from(the_form.elements).forEach((element)=>{
 		let group = _get_attr_(element,"input_group");
 		let modes = _get_attr_(element,"input_modes");
+		let defow = _get_attr_(element,"placeholder");
 
 		if( element.classList.contains("input") ) {
 			// filter the value to be a valid python string
@@ -83,11 +84,14 @@ submit_data = () => {
 
 			if( element.type == "checkbox" ) {
 				// bool
-				value = element.checked ? "True" : "False";
+				value = element.checked ? value_true : value_false;
 				empty = !element.checked;
+			} else if( element.type == "number" ) {
+				// number
+				value = `${value}` || defow || 0;
 			} else {
 				// string
-				value = `"${value}"`;
+				value = `"${value || defow}"` || '""';
 			}
 			if(
 				// non optional entry
@@ -97,12 +101,13 @@ submit_data = () => {
 				// group with a value
 				|| non_empty_groups.has(group)
 			) {
-				// python dict entry
-				output += `  "${element.name}": ${value},\n`;
+				name = element.name
+				// format entry
+				output += eval("`" + line_format + "`")
 			}
 		}
 	});
-	output += "}\n";
+	output += file_suffix;
 
 	// output the string to the output text area
 	let lines_num = output.split("\n").length + 1;
@@ -117,10 +122,10 @@ submit_data = () => {
 	let blob_url = window.URL.createObjectURL(blob_data);
 	// put the data into the link, with link text and file name
 	var download = $("download_link");
-	download.download = "secrets.py";
-	download.title = "secrets.py";
+	download.download = file_name;
+	download.title = file_name;
 	download.href = blob_url;
-	download.innerHTML = "Download secrets.py";
+	download.innerHTML = `Download ${file_name}`;
 
 	// show the results
 	$("result").style.display = "block";
@@ -188,6 +193,9 @@ make_form_auto = () => {
 				if( value.toLowerCase() == "true" ) {
 					_set_attr_(input,"checked", true);
 				}
+			}
+			if( modes.includes("$") ) {
+				input.type = "number";
 			}
 
 			let label = _("label");
