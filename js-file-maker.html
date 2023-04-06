@@ -32,6 +32,9 @@ button, a {
 st {
 	color: red;
 }
+so {
+	color: orange;
+}
 </style>
 <!--
 This is the form itself.
@@ -72,15 +75,21 @@ submit_data = () => {
 
 	// create the output string
 	var output = file_prefix;
-	Array.from(the_form.elements).forEach((element)=>{
+	var missing = [];
+	for( element of Array.from(the_form.elements) ) {
 		let group = _get_attr_(element,"input_group");
 		let modes = _get_attr_(element,"input_modes");
 		let defow = _get_attr_(element,"placeholder");
+		let name = element.name;
 
 		if( element.classList.contains("input") ) {
 			// filter the value to be a valid python string
 			let value = element.value.replaceAll(/(\\|")/g, '\\$1');
 			var empty = (value == "");
+
+			if( empty && modes.includes("+") ) {
+				missing.push(element.name);
+			}
 
 			if( element.type == "checkbox" ) {
 				// bool
@@ -94,19 +103,22 @@ submit_data = () => {
 				value = `"${value || defow}"` || '""';
 			}
 			if(
-				// non optional entry
+				// non optional field
 				(group == "" && !modes.includes("?"))
-				// optional entry with a value
+				// optional field with a value
 				|| (modes.includes("?") && !empty)
-				// group with a value
-				|| non_empty_groups.has(group)
+				// group with a value for a non optional field
+				|| (non_empty_groups.has(group) && !modes.includes("?"))
 			) {
-				name = element.name
 				// format entry
-				output += eval("`" + line_format + "`")
+				output += eval("`" + line_format + "`");
 			}
 		}
-	});
+	}
+	if( missing.length > 0 ) {
+		alert("Missing values for: " + missing.join(", "));
+		return false;
+	}
 	output += file_suffix;
 
 	// output the string to the output text area
@@ -200,7 +212,12 @@ make_form_auto = () => {
 
 			let label = _("label");
 			_set_attr_(label,"for", name);
-			label.innerHTML = (group || modes.includes("?") ? "" : '<st>*</st>') + `${title}`;
+			if( modes.includes("+") ) {
+				label.innerHTML = '<st>*</st>';
+			} else if( !(group || modes.includes("?")) ) {
+				label.innerHTML = '<so>*</so>';
+			}
+			label.innerHTML += `${title}`;
 
 			let line = _("p");
 			if(color) line.style.background = color;

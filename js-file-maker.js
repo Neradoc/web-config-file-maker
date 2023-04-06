@@ -1,19 +1,24 @@
 /*
-One item per line. Item format:
+One field per line. Field format:
 
 title:key:placeholder:group
 
 - title is the displayed name of the entry in the UI
 - key is the key name in the final dict
 - placeholder is the value displayed in the placeholder
-- group contains "?" if the item is optional
-- group contains "#" if the item is a checkbox
-- group contains "$" if the item is a number
-- group is a group name if the group is optional
+- a group name with letters makes the fields appear grouped with colors
+- group contains "?" if the field is optional
+- group contains "#" if the field is a checkbox
+- group contains "$" if the field is a number
+- group contains "+" if the field is required
 
-If placeholder is the word "true" for a checkbox, it's checked by default
-Optional items are not listed if the value is empty.
-Optional groups are not listed if no item in it has a value.
+If placeholder is the word "true" for a checkbox, it's checked by default.
+Non-optional fields are filled with their default value if empty.
+Optional fields are not listed if the value is empty.
+Required fields show an error message if they are empty.
+All fields in a group are listed if any field is listed.
+
+NOTE: a field can be optional and required, but it makes no sense, so don't do that.
 
 To make an item a popup menu (html SELECT) add an entry in select_fields below.
 The entry is named field_ + the name of the field (as defined in the list above).
@@ -33,7 +38,6 @@ var file_suffix = ""
 var line_format = '${name} = ${value}\n'
 */
 
-
 var fields = `
 Speed:SPEED:10:$
 WiFi SSID:ssid:home:
@@ -41,8 +45,8 @@ WiFi Password:password:password01:
 Time Zone:timezone::?
 Hide Drive:hide_drive::#?
 Enable HID:enable_hid:True:#
-Adafruit IO User:aio_username:Username:aio
-Adafruit IO key:aio_key:bfa67934:aio
+Adafruit IO User:aio_username:Username:aio?
+Adafruit IO key:aio_key:bfa67934:aio?
 Open Weather Token:openweather_token:c1332f68:ow
 Open Weather Location:openweather_location:Paris, FR:ow
 
