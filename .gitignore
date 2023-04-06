@@ -1,1 +1,3 @@
 *.mini.html
+*.setup.html
+.env

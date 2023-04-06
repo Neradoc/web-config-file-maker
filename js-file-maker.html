@@ -1,41 +1,26 @@
+<meta charset="utf-8" />
 <p>Hello, this is a generic script to create a secrets.py file.</p>
-<script>
-/*
-One item per line. Item format:
-
-key:placeholder:group
-
-- key is the key name in the final dict
-- placeholder is the value displayed in the placeholder
-- group is "?" if the item is optional
-- group is a group name is the group is optional
-
-Optional items are not listed if the value is empty.
-Optional groups are not listed if no item in it has a value.
-*/
-fields = `
-ssid:home
-password:password01
-timezone:Europe/Paris:?
-aio_username:Username:aio
-aio_key:bfa67934:aio
-openweather_token:c1332f68:ow
-openweather_location:Paris, FR:ow
-
-`;
-</script>
+<script src="js-file-maker.js"></script>
 <!-- <title>Create config</title> -->
 <style>
-* { font-size: 1em; }
+* { font-size: 1em; font-family: Verdana; }
 #the_form p {
 	display: table-row;
 }
-it { text-align: right; }
-it, input {
+label { text-align: right; }
+label, .input {
 	display: table-cell;
 	padding: 4px;
 }
-input {
+label select {
+	width: 1em;
+	margin-left: 0.5em;
+	padding-left: 1em;
+}
+select option:first-child {
+	font-style: italic;
+}
+.input {
 	background-color: rgba(255,255,255,0.8);
 }
 #result {
@@ -48,7 +33,6 @@ st {
 	color: red;
 }
 </style>
-<meta charset="utf-8" />
 <!--
 This is the form itself.
 It's created dynamically, displayed as a table, with a big button at the bottom.
@@ -60,11 +44,12 @@ It's created dynamically, displayed as a table, with a big button at the bottom.
 <!-- The output text field. Selects the whole text on focus for copy and paste. -->
 <textarea id="output_text" onfocus="this.select()"></textarea>
 </p>
-
 <script>
 colors_list = ["#97FFF9", "#FFFC79", "#A7FAAA", "#FFB0FF"];
 $ = (x) => { return document.getElementById(x) };
 _ = (x) => { return document.createElement(x) };
+_get_attr_ = (x,y) => { return x.getAttribute(y) };
+_set_attr_ = (x,y,z) => { return x.setAttribute(y,z) };
 
 // this creates the config string and file link
 submit_data = () => {
@@ -74,9 +59,13 @@ submit_data = () => {
 	// count empty groups
 	var non_empty_groups = new Map();
 	Array.from(the_form.elements).forEach((element)=>{
-		let group = element.getAttribute("group");
+		let group = _get_attr_(element,"input_group");
+		var value = element.value;
+		if( element.type == "checkbox" ) {
+			value = element.checked ? 1 : 0;
+		}
 		// compute empty groups for filtering
-		if(group && element.value) {
+		if(group && value) {
 			non_empty_groups.set(group, true);
 		}
 	});
@@ -84,20 +73,32 @@ submit_data = () => {
 	// create the output string
 	var output = "secrets = {\n";
 	Array.from(the_form.elements).forEach((element)=>{
-		let group = element.getAttribute("group");
-		if( element.tagName == "INPUT" ) {
+		let group = _get_attr_(element,"input_group");
+		let modes = _get_attr_(element,"input_modes");
+
+		if( element.classList.contains("input") ) {
 			// filter the value to be a valid python string
 			let value = element.value.replaceAll(/(\\|")/g, '\\$1');
+			var empty = (value == "");
+
+			if( element.type == "checkbox" ) {
+				// bool
+				value = element.checked ? "True" : "False";
+				empty = !element.checked;
+			} else {
+				// string
+				value = `"${value}"`;
+			}
 			if(
 				// non optional entry
-				!group
-				// optional entriy with a value
-				|| (group == "?" && value)
+				(group == "" && !modes.includes("?"))
+				// optional entry with a value
+				|| (modes.includes("?") && !empty)
 				// group with a value
 				|| non_empty_groups.has(group)
 			) {
 				// python dict entry
-				output += `  "${element.name}": "${value}",\n`;
+				output += `  "${element.name}": ${value},\n`;
 			}
 		}
 	});
@@ -135,13 +136,19 @@ make_form_auto = () => {
 	fields_list.forEach((item, index) => {
 		items = item.trim().split(/\s*:\s*/).concat(["", "", ""]);
 
-		let name = items[0];
+		var title = items[0].trim();
+		let name = items[1];
 		if(name) {
-			let value = items[1];
-			let group = items[2];
+			let value = items[2];
+			var group = items[3].trim();
+
+			var modes = group.replace(/[a-z1-9]/ig,"");
+			group = group.replace(/[^a-z1-9]/ig,"");
+
+			if( title == "" ) title = name;
 
 			color = "";
-			if( group && group != "?" ) {
+			if( group != "" ) {
 				if( !group_colors.has(group) ) {
 					group_colors.set(group, colors_list[color_index]);
 					color_index = (color_index + 1) % colors_list.length;
@@ -149,23 +156,63 @@ make_form_auto = () => {
 				color = group_colors.get(group);
 			}
 
-			let input = _("input");
-			input.id = name;
-			input.name = name;
-			input.placeholder = value;
-			input.setAttribute("group", group);
+			var input = null;
+			var select = null;
+			var selects = select_fields[`field_${name}`]
+			if( selects != undefined ) {
+				input = _("input");
+				select = _("select");
+				option = _("option");
+				option.innerHTML = name;
+				option.value = "";
+				select.append(option);
+				selects.forEach((optval) => {
+					option = _("option");
+					option.innerHTML = optval;
+					_set_attr_(option,"target_input", name)
+					select.append(option);
+				});
+			} else {
+				input = _("input");
+				input.placeholder = value;
+			}
 
-			let label = _("it");
-			label.innerHTML = (group ? "" : '<st>*</st>') + `${name}`;
+			input.id = name;
+			input.className = "input";
+			input.name = name;
+			_set_attr_(input,"input_group", group);
+			_set_attr_(input,"input_modes", modes);
+			if( modes.includes("#") ) {
+				input.type = "checkbox";
+				input.value = "";
+				if( value.toLowerCase() == "true" ) {
+					_set_attr_(input,"checked", true);
+				}
+			}
+
+			let label = _("label");
+			_set_attr_(label,"for", name);
+			label.innerHTML = (group || modes.includes("?") ? "" : '<st>*</st>') + `${title}`;
 
 			let line = _("p");
 			if(color) line.style.background = color;
+			if(select) {
+				label.appendChild(select);
+			}
 			line.append(label);
 			line.append(input);
 			the_form.append(line);
 		}
 	});
-	the_form.innerHTML += (`<p><it></it><it><button onclick="submit_data();">Generate config</button></it></p>`);
+	the_form.onclick = function(event) {
+		var target = event.target;
+		var input = $(_get_attr_(target,"target_input"));
+		if(input) {
+			input.value = target.value;
+			input.select();
+		};
+	};
+	the_form.innerHTML += (`<p><label></label><label><button>Generate config</button></label></p>`);
 };
 make_form_auto();
 </script>
