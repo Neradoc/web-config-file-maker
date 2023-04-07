@@ -39,10 +39,9 @@ var line_format = '${name} = ${value}\n'
 */
 
 var fields = `
-Speed:SPEED:10:$
-WiFi SSID:ssid:home:
-WiFi Password:password:password01:
-Time Zone:timezone::?
+WiFi SSID:ssid:home:wifi+
+WiFi Password:password:password01:wifi
+Time Zone:timezone::
 Hide Drive:hide_drive::#?
 Enable HID:enable_hid:True:#
 Adafruit IO User:aio_username:Username:aio?

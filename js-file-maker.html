@@ -79,7 +79,7 @@ submit_data = () => {
 	for( element of Array.from(the_form.elements) ) {
 		let group = _get_attr_(element,"input_group");
 		let modes = _get_attr_(element,"input_modes");
-		let defow = _get_attr_(element,"placeholder");
+		let defow = _get_attr_(element,"placeholder") || "";
 		let name = element.name;
 
 		if( element.classList.contains("input") ) {
@@ -100,7 +100,8 @@ submit_data = () => {
 				value = `${value}` || defow || 0;
 			} else {
 				// string
-				value = `"${value || defow}"` || '""';
+				value = value || defow || "";
+				value = `"${value}"`;
 			}
 			if(
 				// non optional field
